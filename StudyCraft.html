@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyCraft</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Inter:wght@400;500;600;700&display=swap');
+:root{
+  --bg:#0d1117;--surface:#161b22;--panel:#1e2530;--border:#30363d;
+  --accent:#58a6ff;--gold:#ffd700;--green:#3fb950;--red:#f85149;
+  --purple:#bc8cff;--orange:#ff8c00;--teal:#26d9b1;
+  --text:#e6edf3;--muted:#8b949e;
+  --pixel:'Press Start 2P',monospace;--vt:'VT323',monospace;--body:'Inter',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0}
+.screen{display:none;position:relative;z-index:1;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* TITLE */
+#screen-title{align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0d1b2a 0%,#0d1117 70%)}
+.title-logo{font-family:var(--pixel);font-size:clamp(16px,4vw,38px);color:var(--gold);text-shadow:4px 4px 0 #7d5a00,0 0 40px #ffd70088;letter-spacing:2px;animation:glow 2s ease-in-out infinite alternate;text-align:center}
+@keyframes glow{from{text-shadow:4px 4px 0 #7d5a00,0 0 20px #ffd70088}to{text-shadow:4px 4px 0 #7d5a00,0 0 60px #ffd700cc}}
+.title-sub{font-family:var(--vt);font-size:26px;color:var(--accent);margin-top:8px;letter-spacing:4px;text-align:center}
+.mascot-wrap{margin:28px 0;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.title-menu{display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:20px}
+.btn-pix{font-family:var(--pixel);font-size:10px;padding:13px 26px;border:3px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;transition:all .15s;letter-spacing:1px}
+.btn-pix:hover{background:var(--accent);color:var(--bg);transform:scale(1.04);box-shadow:0 0 20px var(--accent)}
+.btn-pix.gold{border-color:var(--gold);color:var(--gold)}
+.btn-pix.gold:hover{background:var(--gold);color:var(--bg);box-shadow:0 0 20px var(--gold)}
+.btn-pix.red{border-color:var(--red);color:var(--red)}
+.btn-pix.red:hover{background:var(--red);color:#fff;box-shadow:0 0 20px var(--red)}
+.xp-wrap{margin-top:28px;text-align:center}
+.xp-label{font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:6px}
+.xp-outer{width:280px;height:14px;background:var(--border);border:2px solid var(--muted)}
+.xp-inner{height:100%;background:linear-gradient(90deg,var(--purple),var(--accent));transition:width .6s}
+
+/* WORLD SELECT */
+#screen-worldsel{padding:24px;background:linear-gradient(180deg,#0d1117 0%,#0d1b2a 100%)}
+.ws-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:16px;border-bottom:2px solid var(--border)}
+.ws-title{font-family:var(--pixel);font-size:13px;color:var(--gold)}
+.hud{display:flex;gap:20px;align-items:center}
+.hud-s{font-family:var(--pixel);font-size:8px;color:var(--muted);text-align:center}
+.hud-s span{display:block;color:var(--text);font-size:13px;margin-top:2px}
+.worlds-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.wcard{background:var(--surface);border:2px solid var(--border);padding:24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.wcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.wcard:hover:not(.locked){border-color:var(--accent);transform:translateY(-4px);box-shadow:0 8px 32px #58a6ff22}
+.wcard.locked{opacity:.4;cursor:not-allowed}
+.wcard-emoji{font-size:38px;margin-bottom:12px;display:block}
+.wcard-name{font-family:var(--pixel);font-size:10px;color:var(--text);margin-bottom:8px}
+.wcard-desc{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:16px}
+.wcard-bar{height:6px;background:var(--border)}
+.wcard-fill{height:100%;background:var(--green);transition:width .8s}
+.wcard-meta{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:8px}
+
+/* PHASE LIST */
+#screen-phases{padding:24px;max-width:820px;margin:0 auto;width:100%}
+.ph-header{display:flex;align-items:center;gap:16px;margin-bottom:28px}
+.btn-back{font-family:var(--pixel);font-size:8px;color:var(--muted);background:none;border:2px solid var(--border);padding:8px 12px;cursor:pointer}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+.ph-title{font-family:var(--pixel);font-size:13px;color:var(--gold)}
+.phase-list{display:flex;flex-direction:column;gap:10px}
+.pitem{background:var(--surface);border:2px solid var(--border);padding:18px 22px;display:flex;align-items:center;gap:18px;cursor:pointer;transition:all .15s}
+.pitem:hover:not(.locked){border-color:var(--accent);transform:translateX(6px)}
+.pitem.done{border-color:var(--green)}
+.pitem.locked{opacity:.4;cursor:not-allowed}
+.pnum{font-family:var(--pixel);font-size:13px;color:var(--muted);min-width:36px}
+.pinfo{flex:1}
+.pname{font-family:var(--pixel);font-size:9px;color:var(--text);margin-bottom:5px}
+.pdesc{font-size:13px;color:var(--muted)}
+.pxp{font-family:var(--pixel);font-size:7px;color:var(--purple);margin-top:4px}
+.pbadge{font-size:22px}
+
+/* LESSON */
+#screen-lesson{max-width:840px;margin:0 auto;padding:24px;width:100%}
+.prog-bar{display:flex;gap:8px;margin-bottom:28px;align-items:center;flex-wrap:wrap}
+.sdot{width:10px;height:10px;border:2px solid var(--border);border-radius:50%;transition:all .3s;flex-shrink:0}
+.sdot.done{background:var(--green);border-color:var(--green)}
+.sdot.active{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px var(--accent)}
+.lcard{background:var(--surface);border:2px solid var(--border);padding:32px;animation:slin .3s ease}
+@keyframes slin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.step-lbl{font-family:var(--pixel);font-size:8px;color:var(--accent);letter-spacing:2px;margin-bottom:14px}
+.step-ttl{font-family:var(--pixel);font-size:14px;color:var(--gold);margin-bottom:22px;line-height:1.6}
+.lbody{font-size:15px;line-height:1.85;color:var(--text)}
+.lbody p{margin-bottom:14px}
+.lbody strong{color:var(--gold)}
+.lbody em{color:var(--accent);font-style:normal}
+.box-hl{background:#58a6ff18;border-left:3px solid var(--accent);padding:12px 16px;margin:14px 0;font-size:14px}
+.box-an{background:#bc8cff18;border-left:3px solid var(--purple);padding:12px 16px;margin:14px 0;font-size:14px;line-height:1.7}
+.box-ex{background:#3fb95018;border-left:3px solid var(--green);padding:14px;margin:14px 0;font-family:monospace;font-size:14px;line-height:2;white-space:pre-wrap}
+.box-cu{background:#ffd70018;border-left:3px solid var(--gold);padding:12px 16px;margin:14px 0;font-size:14px}
+.box-warn{background:#f8514918;border-left:3px solid var(--red);padding:12px 16px;margin:14px 0;font-size:14px}
+.hint-box{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--purple);padding:14px;margin:14px 0;font-size:13px;line-height:1.6}
+.hint-owl{font-size:28px;flex-shrink:0}
+.tt{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+.tt th,.tt td{border:1px solid var(--border);padding:8px 14px;text-align:center}
+.tt th{background:var(--panel);color:var(--accent);font-family:var(--pixel);font-size:7px}
+.tt td.t{color:var(--green)}.tt td.f{color:var(--red)}
+.lnav{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
+/* QUIZ / EXERCISE */
+.ecard{background:var(--surface);border:2px solid var(--border);padding:30px;animation:slin .3s ease}
+.eq{font-size:15px;line-height:1.7;margin-bottom:22px}
+.eq strong{color:var(--gold)}
+.choices{display:flex;flex-direction:column;gap:10px}
+.cbtn{text-align:left;background:var(--panel);border:2px solid var(--border);color:var(--text);padding:13px 16px;cursor:pointer;font-size:14px;line-height:1.5;transition:all .15s;display:flex;gap:10px;align-items:flex-start;font-family:var(--body)}
+.cbtn:hover:not(:disabled){border-color:var(--accent);background:#58a6ff10}
+.cbtn.correct{border-color:var(--green);background:#3fb95022;color:var(--green)}
+.cbtn.wrong{border-color:var(--red);background:#f8514922}
+.cbtn:disabled{cursor:not-allowed}
+.cltr{font-family:var(--pixel);font-size:8px;color:var(--accent);min-width:18px;margin-top:3px;flex-shrink:0}
+.fb{margin-top:18px;padding:14px;font-size:14px;line-height:1.6;display:none;border:2px solid var(--green);animation:slin .3s ease}
+.fb.show{display:block}
+.fb.correct{background:#3fb95018;border-color:var(--green);color:var(--green)}
+.fb.wrong{background:#f8514918;border-color:var(--red)}
+.fb .why{color:var(--muted);margin-top:8px;font-size:13px;line-height:1.6}
+.qnav{display:none;justify-content:flex-end;margin-top:18px}
+.qnav.show{display:flex}
+/* BOSS */
+#screen-boss{padding:24px;max-width:840px;margin:0 auto;width:100%}
+.boss-hdr{text-align:center;margin-bottom:28px}
+.boss-ttl{font-family:var(--pixel);font-size:16px;color:var(--red);animation:bshake .5s ease-in-out infinite alternate;margin-bottom:8px}
+@keyframes bshake{from{text-shadow:3px 0 0 #f8514988}to{text-shadow:-3px 0 0 #f8514988,0 0 20px var(--red)}}
+.boss-sub{font-size:13px;color:var(--muted)}
+.bhp-wrap{margin:18px 0}
+.bhp-lbl{font-family:var(--pixel);font-size:8px;color:var(--red);margin-bottom:6px}
+.bhp-bar{height:20px;background:var(--border);border:2px solid var(--red)}
+.bhp-fill{height:100%;background:linear-gradient(90deg,var(--red),#ff6b6b);transition:width .5s}
+.bscore{font-family:var(--pixel);font-size:10px;color:var(--gold);text-align:center;margin:10px 0}
+/* RESULTS */
+#screen-results{align-items:center;justify-content:center;padding:40px 24px}
+.res-card{background:var(--surface);border:2px solid var(--gold);padding:44px;text-align:center;max-width:520px;width:100%;box-shadow:0 0 60px #ffd70022}
+.res-emoji{font-size:60px;margin-bottom:14px;display:block}
+.res-ttl{font-family:var(--pixel);font-size:16px;color:var(--gold);margin-bottom:8px}
+.res-sub{color:var(--muted);font-size:14px;margin-bottom:28px}
+.res-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:28px}
+.rst{background:var(--panel);padding:14px;text-align:center}
+.rst-n{font-family:var(--pixel);font-size:20px;color:var(--accent);display:block}
+.rst-l{font-size:12px;color:var(--muted);margin-top:4px}
+.xp-gained{font-family:var(--pixel);font-size:11px;color:var(--purple);margin-bottom:20px}
+.ach-pop{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--gold);padding:12px 14px;margin-bottom:20px;animation:popin .4s cubic-bezier(.4,0,.2,1)}
+@keyframes popin{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.ach-ico{font-size:26px}
+.ach-txt{font-family:var(--pixel);font-size:8px;color:var(--gold);line-height:1.6}
+/* BUTTONS */
+.btn-p{font-family:var(--pixel);font-size:9px;padding:13px 22px;background:var(--accent);color:var(--bg);border:none;cursor:pointer;transition:all .15s;letter-spacing:1px}
+.btn-p:hover{background:#79bcff;transform:translateY(-2px);box-shadow:0 4px 20px #58a6ff44}
+.btn-p.danger{background:var(--red)}.btn-p.danger:hover{background:#ff7b76}
+.btn-s{font-family:var(--pixel);font-size:8px;padding:11px 18px;background:transparent;color:var(--muted);border:2px solid var(--border);cursor:pointer;transition:all .15s}
+.btn-s:hover{border-color:var(--muted);color:var(--text)}
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:#000b;z-index:100;display:none;align-items:center;justify-content:center}
+.modal-ov.show{display:flex}
+.modal-box{background:var(--surface);border:2px solid var(--accent);padding:36px;max-width:480px;width:90%;text-align:center;box-shadow:0 0 60px #58a6ff22}
+.modal-ttl{font-family:var(--pixel);font-size:11px;color:var(--accent);margin-bottom:14px}
+.modal-body{font-size:14px;color:var(--text);line-height:1.7;margin-bottom:26px}
+.modal-acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+/* SESSION TABS */
+.session-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border)}
+.stab{font-family:var(--pixel);font-size:9px;padding:12px 20px;background:transparent;color:var(--muted);border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+.stab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.stab:hover:not(.active){color:var(--text)}
+/* NOTIF */
+.notif{position:fixed;top:20px;right:20px;z-index:200;background:var(--surface);border:2px solid var(--green);padding:12px 18px;font-family:var(--pixel);font-size:8px;color:var(--green);animation:nin .3s ease,nout .3s ease 2.5s forwards;max-width:300px;line-height:1.5}
+@keyframes nin{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
+@keyframes nout{to{transform:translateX(120%);opacity:0}}
+/* HELPERS */
+.flex{display:flex}.col{flex-direction:column}.center{align-items:center;justify-content:center;text-align:center}
+.gap-12{gap:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.hidden{display:none!important}
+.tag-easy{background:#3fb95022;color:var(--green);border:1px solid var(--green);font-family:var(--pixel);font-size:7px;padding:3px 8px;display:inline-block;margin-bottom:10px}
+.tag-hard{background:#f8514922;color:var(--red);border:1px solid var(--red);font-family:var(--pixel);font-size:7px;padding:3px 8px;display:inline-block;margin-bottom:10px}
+.tag-boss{background:#ffd70022;color:var(--gold);border:1px solid var(--gold);font-family:var(--pixel);font-size:7px;padding:3px 8px;display:inline-block;margin-bottom:10px}
+.badge-new{background:var(--red);color:#fff;font-family:var(--pixel);font-size:7px;padding:2px 6px;margin-left:8px;animation:glow 1s infinite alternate}
+@media(max-width:600px){.lcard,.ecard{padding:18px}.res-card{padding:24px}.res-stats{grid-template-columns:1fr}.title-logo{font-size:15px}}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<!-- ═══ TITLE ═══ -->
+<div id="screen-title" class="screen active">
+  <div class="flex col center" style="gap:0;padding:50px 20px;flex:1">
+    <div class="title-logo">⚔ STUDYCRAFT ⚔</div>
+    <div class="title-sub">RACIOCÍNIO LÓGICO</div>
+    <div class="mascot-wrap">
+      <svg width="110" height="110" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+        <rect x="20" y="28" width="24" height="26" fill="#7c4dff"/>
+        <rect x="10" y="32" width="12" height="16" fill="#5c35cc"/>
+        <rect x="42" y="32" width="12" height="16" fill="#5c35cc"/>
+        <rect x="18" y="10" width="28" height="22" fill="#9c6ef8"/>
+        <rect x="20" y="14" width="10" height="10" fill="#fff"/>
+        <rect x="23" y="16" width="5" height="6" fill="#ffd700"/>
+        <rect x="25" y="18" width="3" height="3" fill="#000"/>
+        <rect x="34" y="14" width="10" height="10" fill="#fff"/>
+        <rect x="37" y="16" width="5" height="6" fill="#ffd700"/>
+        <rect x="39" y="18" width="3" height="3" fill="#000"/>
+        <rect x="29" y="26" width="6" height="4" fill="#ffd700"/>
+        <rect x="18" y="6" width="6" height="8" fill="#7c4dff"/>
+        <rect x="40" y="6" width="6" height="8" fill="#7c4dff"/>
+        <rect x="26" y="30" width="12" height="18" fill="#b39ddb"/>
+        <rect x="22" y="52" width="6" height="4" fill="#ffd700"/>
+        <rect x="36" y="52" width="6" height="4" fill="#ffd700"/>
+        <rect x="22" y="40" width="20" height="14" fill="#58a6ff"/>
+        <rect x="31" y="40" width="2" height="14" fill="#2a6399"/>
+        <rect x="24" y="44" width="6" height="2" fill="#fff"/>
+        <rect x="24" y="48" width="6" height="2" fill="#fff"/>
+        <rect x="34" y="44" width="6" height="2" fill="#fff"/>
+        <rect x="34" y="48" width="6" height="2" fill="#fff"/>
+        <rect x="19" y="13" width="12" height="12" fill="none" stroke="#ffd700" stroke-width="2"/>
+        <rect x="33" y="13" width="12" height="12" fill="none" stroke="#ffd700" stroke-width="2"/>
+        <rect x="31" y="17" width="2" height="2" fill="#ffd700"/>
+      </svg>
+    </div>
+    <div style="font-family:var(--vt);font-size:19px;color:var(--muted);margin-bottom:6px">UFPR — SA028 — Prof. Eduardo Pécora</div>
+    <div class="title-menu">
+      <button class="btn-pix gold" onclick="showWorldSel()">▶ INICIAR JORNADA</button>
+      <button class="btn-pix" onclick="showAchievements()">🏆 CONQUISTAS (<span id="ach-count">0</span>)</button>
+      <button class="btn-pix red" onclick="resetProgress()">🗑 RESETAR PROGRESSO</button>
+    </div>
+    <div class="xp-wrap">
+      <div class="xp-label">NÍVEL <span id="t-lvl">1</span> — XP TOTAL</div>
+      <div class="xp-outer"><div class="xp-inner" id="t-xpbar" style="width:0%"></div></div>
+      <div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:5px" id="t-xptxt">0 / 300 XP</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WORLD SELECT ═══ -->
+<div id="screen-worldsel" class="screen">
+  <div class="ws-header">
+    <div class="ws-title">🗺 ESCOLHA A MATÉRIA</div>
+    <div class="hud">
+      <div class="hud-s">XP<span id="ws-xp">0</span></div>
+      <div class="hud-s">NVL<span id="ws-lvl">1</span></div>
+    </div>
+    <button class="btn-back" onclick="showTitle()">← INÍCIO</button>
+  </div>
+  <div class="worlds-grid" id="worlds-grid"></div>
+</div>
+
+<!-- ═══ PHASES ═══ -->
+<div id="screen-phases" class="screen">
+  <div style="max-width:840px;margin:0 auto;padding:24px;width:100%">
+    <div class="ph-header">
+      <button class="btn-back" onclick="showWorldSel()">← MUNDOS</button>
+      <div class="ph-title" id="ph-world-title">RACIOCÍNIO LÓGICO</div>
+    </div>
+    <div class="session-tabs" id="session-tabs"></div>
+    <div class="phase-list" id="phase-list"></div>
+  </div>
+</div>
+
+<!-- ═══ LESSON ═══ -->
+<div id="screen-lesson" class="screen">
+  <div style="max-width:860px;margin:0 auto;padding:24px;width:100%">
+    <div class="prog-bar" id="prog-bar"></div>
+    <div id="lesson-content"></div>
+  </div>
+</div>
+
+<!-- ═══ BOSS ═══ -->
+<div id="screen-boss" class="screen">
+  <div class="boss-hdr">
+    <div class="boss-ttl">👾 BOSS FINAL — PROVAS REAIS UFPR</div>
+    <div class="boss-sub">Questões extraídas das provas anteriores. Sem consulta!</div>
+  </div>
+  <div class="bhp-wrap">
+    <div class="bhp-lbl">VIDA DO BOSS: <span id="bhp-txt">100%</span></div>
+    <div class="bhp-bar"><div class="bhp-fill" id="bhp-bar" style="width:100%"></div></div>
+  </div>
+  <div class="bscore">⭐ PONTOS: <span id="boss-pts">0</span></div>
+  <div id="boss-content"></div>
+</div>
+
+<!-- ═══ RESULTS ═══ -->
+<div id="screen-results" class="screen">
+  <div class="res-card">
+    <span class="res-emoji" id="r-emoji">🏆</span>
+    <div class="res-ttl" id="r-title">FASE CONCLUÍDA!</div>
+    <div class="res-sub" id="r-sub">Parabéns!</div>
+    <div class="res-stats">
+      <div class="rst"><span class="rst-n" id="r-ok">-</span><div class="rst-l">ACERTOS</div></div>
+      <div class="rst"><span class="rst-n" id="r-err">-</span><div class="rst-l">ERROS</div></div>
+      <div class="rst"><span class="rst-n" id="r-xp">-</span><div class="rst-l">XP GANHO</div></div>
+      <div class="rst"><span class="rst-n" id="r-pct">-</span><div class="rst-l">APROVEIT.</div></div>
+    </div>
+    <div class="xp-gained" id="r-xpmsg"></div>
+    <div id="r-ach" class="hidden"></div>
+    <div id="r-rev" style="font-size:13px;color:var(--muted);margin-bottom:20px;text-align:left;line-height:1.6"></div>
+    <div class="flex gap-12" style="flex-wrap:wrap;justify-content:center">
+      <button class="btn-p" id="r-next" onclick="nextAfterResult()">PRÓXIMA FASE →</button>
+      <button class="btn-s" onclick="showPhases()">VER FASES</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PREREQ MODAL ═══ -->
+<div class="modal-ov" id="prereq-modal">
+  <div class="modal-box">
+    <div class="modal-ttl">💡 PRÉ-REQUISITO DETECTADO</div>
+    <div class="modal-body" id="prereq-body">Você precisa de uma base antes de continuar.</div>
+    <div class="modal-acts">
+      <button class="btn-p" onclick="closePrereq(true)">✔ SIM, CONTINUAR</button>
+      <button class="btn-s" onclick="closePrereq(false)">📖 QUERO REVISAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  WORLDS + SESSIONS + PHASES DATA
+// ═══════════════════════════════════════════════════════════════
+const WORLDS = [
+{
+  id:'logica', name:'RACIOCÍNIO LÓGICO', emoji:'🧠',
+  desc:'Proposições, tabelas-verdade, quantificadores e diagramas de Venn. Conteúdo da Prova 2 da UFPR.',
+  color:'#58a6ff',
+  sessions:[
+    {
+      id:'resumo', label:'⚡ RESUMO RÁPIDO', desc:'Revisão direta para a prova.',
+      phases:[
+        {
+          id:'rl-prop', name:'PROPOSIÇÕES', emoji:'📜', xp:60, prereq:null,
+          desc:'O que é verdadeiro e falso, negação, E e OU.',
+          steps:[
+            {type:'intro',label:'📖 INTRODUÇÃO',title:'O Jogo da Verdade',body:`
+              <div class="hint-box"><span class="hint-owl">🦉</span>Olá! Sou o Corujão. Vou te explicar tudo como se você tivesse 10 anos. Pode parecer simples no começo — mas é exatamente assim que o conhecimento entra de verdade!</div>
+              <div class="box-an">🎮 <strong>Imagine que você está jogando um jogo de adivinhação.</strong><br>Alguém faz uma afirmação. Você precisa responder: é <strong>VERDADE</strong> ou é <strong>MENTIRA</strong>?<br>Isso é lógica! Analisar afirmações e descobrir se são V ou F.</div>
+              <p>Na matemática, essas afirmações se chamam <strong>proposições</strong>.</p>
+              <div class="box-hl">🎯 Resumo desta fase: Negação (¬), Conjunção (∧), Disjunção (∨), Condicional (→) e suas tabelas.</div>`
+            },
+            {type:'lesson',label:'💡 PROPOSIÇÕES',title:'O que é uma Proposição?',body:`
+              <p>Uma <strong>proposição</strong> é uma frase que só pode ser <em>verdadeira</em> ou <em>falsa</em>. Nunca os dois ao mesmo tempo.</p>
+              <div class="box-ex">✅ "2 + 2 = 4"                → Verdadeira
+✅ "Todo bolsista faz pesquisa"  → Pode ser V ou F
+❌ "Feche a porta!"              → Ordem → NÃO é proposição
+❌ "Que horas são?"              → Pergunta → NÃO é proposição</div>
+              <table class="tt"><tr><th>Conectivo</th><th>Símbolo</th><th>Quando é VERDADEIRO</th></tr>
+              <tr><td>Negação</td><td>¬P</td><td>Quando P é falso</td></tr>
+              <tr><td>E (conjunção)</td><td>P ∧ Q</td><td>Só quando AMBOS são V</td></tr>
+              <tr><td>OU (disjunção)</td><td>P ∨ Q</td><td>Quando PELO MENOS UM é V</td></tr>
+              <tr><td>Se→Então</td><td>P → Q</td><td>Falso APENAS quando P=V e Q=F</td></tr></table>
+              <div class="box-warn">⚠️ Negar "TODO X é Y" → "ALGUM X NÃO é Y" (nunca use "nenhum"!)<br>Negar "NENHUM X é Y" → "ALGUM X é Y"</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ RÁPIDO',title:'Quiz — Proposições',questions:[
+              {q:'P=V, Q=F. Qual o valor de P ∧ Q?',ch:['V','F','Depende','Indefinido'],ok:1,why:'E (∧) só é V quando os DOIS são V. Como Q=F, o resultado é F.'},
+              {q:'P=V, Q=F. Qual o valor de P → Q?',ch:['V','F','Tautologia','Contradição'],ok:1,why:'A condicional só é FALSA quando P=V e Q=F. Promessa quebrada!'},
+              {q:'Negação de "Todo estudante bolsista faz pesquisa":',ch:['Nenhum estudante bolsista faz pesquisa','Algum estudante bolsista não faz pesquisa','Todo estudante não faz pesquisa','Algum estudante faz pesquisa'],ok:1,why:'Negar "Todo X é Y" → "Algum X NÃO é Y". Regra fundamental!'},
+            ]}
+          ]
+        },
+        {
+          id:'rl-venn', name:'DIAGRAMA DE VENN', emoji:'⭕', xp:80, prereq:{id:'rl-prop',msg:'Venn usa proposições com "Todo", "Algum" e "Nenhum". Você já entende esses conceitos?'},
+          desc:'Círculos que mostram relações entre conjuntos.',
+          steps:[
+            {type:'lesson',label:'💡 VENN',title:'Desenhando a Lógica com Círculos',body:`
+              <div class="box-an">🎈 <strong>Pense em grupos de pessoas numa festa.</strong><br>Um círculo = grupo de pessoas com Python. Outro círculo = grupo de pesquisadores.<br>Quem aparece no meio (sobreposição) faz pesquisa E usa Python!</div>
+              <div class="box-ex">TODO A é B      → Círculo A fica DENTRO de B
+ALGUM A é B     → Círculos se SOBREPÕEM (meio não-vazio)
+NENHUM A é B    → Círculos SEPARADOS, sem toque
+ALGUM A não é B → Parte de A fica FORA de B</div>
+              <div class="box-hl"><strong>Questão real da Prova 2 UFPR:</strong><br>
+A=pesquisa, B=Python, C=bolsistas<br>
+P: "Todo bolsista faz pesquisa" → C ⊂ A<br>
+Q: "Existe usuário Python sem pesquisa" → B ⊄ A<br>
+S: "Nenhum pesquisador deixa de usar Python" → A ⊂ B<br>
+<strong>Conclusão:</strong> C ⊂ A ⊂ B → Todo bolsista usa Python!</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ',title:'Quiz — Venn',questions:[
+              {q:'"Todo TYU é verde." Como fica no diagrama?',ch:['TYU e Verde se sobrepõem parcialmente','Círculo TYU fica DENTRO de Verde','Círculos separados','Verde fica dentro de TYU'],ok:1,why:'Todo X é Y = X ⊂ Y. O círculo menor fica dentro do maior.'},
+              {q:'P1: Todo bolsista faz pesquisa. P2: Nenhum pesquisador deixa de usar Python. Logo:',ch:['Algum bolsista não usa Python','Todo bolsista usa Python','Nenhum bolsista usa Python','Não podemos concluir'],ok:1,why:'Silogismo! C⊂A e A⊂B → C⊂B. Todo bolsista usa Python!'},
+            ]}
+          ]
+        },
+        {
+          id:'rl-boss', name:'👾 BOSS FINAL — LÓGICA', emoji:'💀', xp:150, isBoss:true,
+          desc:'Questões das provas reais da UFPR. Tudo junto!',
+          prereq:{id:'rl-venn',msg:'O Boss usa TODO o conteúdo de lógica. Você se sente pronto?'}
+        }
+      ]
+    },
+    {
+      id:'completo', label:'📚 COMPLETO', desc:'Todas as explicações passo a passo.',
+      phases:[
+        {
+          id:'rl-prop-c', name:'PROPOSIÇÕES', emoji:'📜', xp:80, prereq:null,
+          desc:'Do zero ao domínio: negação, conectivos, tabelas-verdade.',
+          steps:[
+            {type:'intro',label:'📖 INTRODUÇÃO',title:'O Jogo da Verdade — Do Zero!',body:`
+              <div class="hint-box"><span class="hint-owl">🦉</span>Vamos aprender tudo do começo! Cada explicação vai ser super simples. Depois de entender a ideia, aí sim vemos a parte técnica. Combinado?</div>
+              <div class="box-an">🎮 <strong>Imagine que você está jogando "Verdade ou Mito"</strong> com seus amigos.<br>Alguém diz: "O céu é verde." Você pensa: <em>isso é verdade?</em> → Não! É mentira.<br><br>Na lógica, fazemos exatamente isso com frases — chamamos de <strong>proposições</strong>.</div>
+              <p>Uma <strong>proposição</strong> é qualquer frase que pode ser julgada como <em>verdadeira (V)</em> ou <em>falsa (F)</em>. Simples assim!</p>
+              <div class="box-ex">✅ "2 + 2 = 4"                  → Proposição! É Verdadeira.
+✅ "2 + 2 = 5"                  → Proposição! É Falsa.
+✅ "Todo bolsista faz pesquisa" → Proposição! V ou F dependendo da realidade.
+❌ "Feche a porta!"             → Ordem. Não é V nem F → NÃO é proposição.
+❌ "Que horas são?"             → Pergunta → NÃO é proposição.
+❌ "Seja feliz!"                → Desejo → NÃO é proposição.</div>
+              <div class="box-cu">💡 <strong>Definição técnica:</strong> Uma proposição é uma sentença declarativa que possui um único valor lógico: verdadeiro ou falso. Usa-se as letras P, Q, R para representá-las.</div>`
+            },
+            {type:'lesson',label:'🔄 NEGAÇÃO',title:'Virando a Chave: a Negação (¬)',body:`
+              <div class="box-an">🔦 <strong>Pense numa lâmpada.</strong><br>Ela está LIGADA (verdadeiro). Apertar o interruptor a deixa DESLIGADA (falso).<br>A <strong>negação</strong> é esse interruptor da lógica!</div>
+              <p>O símbolo é <strong>¬</strong> (ou "não"). Ela inverte o valor da proposição.</p>
+              <table class="tt">
+                <tr><th>P</th><th>¬P</th></tr>
+                <tr><td class="t">V</td><td class="f">F</td></tr>
+                <tr><td class="f">F</td><td class="t">V</td></tr>
+              </table>
+              <div class="box-ex">P  = "O estudante participa de pesquisa."  → V
+¬P = "O estudante NÃO participa de pesquisa." → F</div>
+              <div class="box-hl">⚠️ <strong>Regras especiais para quantificadores (CAI NA PROVA!):</strong><br>
+• Negar "TODO X é Y"      → "ALGUM X NÃO é Y"<br>
+• Negar "NENHUM X é Y"    → "ALGUM X é Y"<br>
+• Negar "ALGUM X é Y"     → "NENHUM X é Y"<br><br>
+<strong>Exemplos das provas reais:</strong><br>
+"Toda mulher é sábia." → Negação: "Alguma mulher NÃO é sábia."<br>
+"Nenhum pássaro é marrom." → Negação: "Algum pássaro é marrom."</div>`
+            },
+            {type:'lesson',label:'🔗 E e OU',title:'Conectando Proposições: E (∧) e OU (∨)',body:`
+              <div class="box-an">🎮 <strong>Você quer entrar na sala especial do jogo.</strong><br>
+Sala com tranca dupla: precisa de <strong>chave E código</strong>. As duas coisas. → Conjunção (E)<br>
+Saída de emergência: aceita <strong>chave OU código</strong>. Qualquer uma serve. → Disjunção (OU)</div>
+              <p><strong>Conjunção — E (∧):</strong> só verdadeira quando AMBAS são V.</p>
+              <table class="tt">
+                <tr><th>P</th><th>Q</th><th>P ∧ Q</th></tr>
+                <tr><td class="t">V</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="t">V</td><td class="f">F</td><td class="f">F</td></tr>
+                <tr><td class="f">F</td><td class="t">V</td><td class="f">F</td></tr>
+                <tr><td class="f">F</td><td class="f">F</td><td class="f">F</td></tr>
+              </table>
+              <p><strong>Disjunção — OU (∨):</strong> falsa APENAS quando AMBAS são F.</p>
+              <table class="tt">
+                <tr><th>P</th><th>Q</th><th>P ∨ Q</th></tr>
+                <tr><td class="t">V</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="t">V</td><td class="f">F</td><td class="t">V</td></tr>
+                <tr><td class="f">F</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="f">F</td><td class="f">F</td><td class="f">F</td></tr>
+              </table>`
+            },
+            {type:'lesson',label:'➡️ CONDICIONAL',title:'Se P... Então Q: a Condicional (→)',body:`
+              <div class="box-an">📦 <strong>Imagine uma promessa:</strong><br>"Se você passar de ano, eu te dou um presente."<br><br>
+Quando a promessa é QUEBRADA (falsa)?<br>
+→ Só quando você PASSOU DE ANO (P=V) mas EU NÃO DEI O PRESENTE (Q=F).<br>
+Se você não passou, a promessa não importa — não foi quebrada!</div>
+              <table class="tt">
+                <tr><th>P</th><th>Q</th><th>P → Q</th></tr>
+                <tr><td class="t">V</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="t">V</td><td class="f">F</td><td class="f">F</td></tr>
+                <tr><td class="f">F</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="f">F</td><td class="f">F</td><td class="t">V</td></tr>
+              </table>
+              <div class="box-hl">🔑 A condicional só é <strong>FALSA</strong> quando P=V e Q=F. Em todos os outros casos, é verdadeira!</div>
+              <div class="box-ex">Tabela da Prova 2 — (P∧Q) → P:
+P=V, Q=V: P∧Q=V, V→V = V ✅
+P=V, Q=F: P∧Q=F, F→V = V ✅
+P=F, Q=V: P∧Q=F, F→F = V ✅
+P=F, Q=F: P∧Q=F, F→F = V ✅
+→ É uma TAUTOLOGIA! (sempre verdadeira)</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ COMPLETO',title:'Quiz — Tudo sobre Proposições',questions:[
+              {q:'Qual das frases abaixo é uma proposição válida?',ch:['Que dia é hoje?','Seja gentil!','2 + 3 = 5','Vá embora!'],ok:2,why:'"2 + 3 = 5" pode ser julgada como verdadeira — é uma proposição. As outras são pergunta, conselho e ordem.'},
+              {q:'P=V, Q=V → P ∧ Q = ?',ch:['F','V','Indefinido','Depende de P'],ok:1,why:'E (∧) é V apenas quando AMBAS são V. V∧V = V.'},
+              {q:'P=F, Q=V → P ∨ Q = ?',ch:['F','V','Depende','Tautologia'],ok:1,why:'OU (∨) é F apenas quando os dois são F. F∨V = V.'},
+              {q:'P=V, Q=F → P → Q = ?',ch:['V','F','Depende','V e F'],ok:1,why:'A condicional é FALSA apenas quando P=V e Q=F. Esta é exatamente essa situação!'},
+              {q:'P=F, Q=F → P → Q = ?',ch:['F','V','Indefinido','Contradição'],ok:1,why:'Quando P=F, a condicional é SEMPRE V. A promessa nunca foi ativada!'},
+              {q:'Negação de "Todo TYU é verde":',ch:['Nenhum TYU é verde','Todo TYU não é verde','Algum TYU não é verde','Algum TYU é verde'],ok:2,why:'Negar ∀ (todo) → ∃¬ (algum não). Regra: negação de "todo" = "algum não".'},
+            ]}
+          ]
+        },
+        {
+          id:'rl-tabela-c', name:'TABELAS-VERDADE', emoji:'📊', xp:100,
+          prereq:{id:'rl-prop-c',msg:'Tabelas-verdade precisam dos conectivos (∧, ∨, →). Você já domina isso?'},
+          desc:'Construir tabelas passo a passo como caiu na Prova 2.',
+          steps:[
+            {type:'lesson',label:'💡 TABELA-VERDADE',title:'O Mapa de Todas as Possibilidades',body:`
+              <div class="box-an">🗺️ <strong>Imagine um mapa do tesouro</strong> que mostra TODOS os caminhos possíveis.<br>
+A tabela-verdade é esse mapa para a lógica: ela lista todas as combinações de V e F possíveis.</div>
+              <div class="box-hl">📐 Regra: com <strong>n</strong> variáveis → <strong>2ⁿ</strong> linhas<br>
+2 variáveis (P,Q) → 4 linhas | 3 variáveis → 8 linhas</div>
+              <p><strong>Como preencher:</strong></p>
+              <div class="box-ex">Passo 1: Liste todas as variáveis e colunas intermediárias
+Passo 2: Preencha P: metade V, metade F (VVFF)
+Passo 3: Preencha Q: alternando V e F (VFVF)
+Passo 4: Calcule cada coluna intermediária
+Passo 5: Calcule o resultado final</div>
+              <p><strong>Tabela da Prova 2 UFPR — (P ∧ Q) → P:</strong></p>
+              <table class="tt">
+                <tr><th>P</th><th>Q</th><th>P ∧ Q</th><th>(P∧Q) → P</th></tr>
+                <tr><td class="t">V</td><td class="t">V</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="t">V</td><td class="f">F</td><td class="f">F</td><td class="t">V</td></tr>
+                <tr><td class="f">F</td><td class="t">V</td><td class="f">F</td><td class="t">V</td></tr>
+                <tr><td class="f">F</td><td class="f">F</td><td class="f">F</td><td class="t">V</td></tr>
+              </table>
+              <div class="box-hl">🏆 Todos V → TAUTOLOGIA! Essa proposição é sempre verdadeira.</div>
+              <p><strong>Tabela da Prova 2 UFPR — (P ∨ Q) → Q:</strong></p>
+              <table class="tt">
+                <tr><th>P</th><th>Q</th><th>P ∨ Q</th><th>(P∨Q) → Q</th></tr>
+                <tr><td class="t">V</td><td class="t">V</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="t">V</td><td class="f">F</td><td class="t">V</td><td class="f">F</td></tr>
+                <tr><td class="f">F</td><td class="t">V</td><td class="t">V</td><td class="t">V</td></tr>
+                <tr><td class="f">F</td><td class="f">F</td><td class="f">F</td><td class="t">V</td></tr>
+              </table>
+              <div class="box-warn">Não é tautologia! Linha 2 tem F. Dependendo dos valores, pode ser falsa.</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ',title:'Quiz — Tabelas-Verdade',questions:[
+              {q:'Quantas linhas tem a tabela com 3 variáveis?',ch:['4','6','8','12'],ok:2,why:'2³ = 8. Com n variáveis, sempre 2ⁿ linhas.'},
+              {q:'P=V, Q=V → (P∧Q)→P = ?',ch:['F','V','Tautologia','Contradição'],ok:1,why:'P∧Q=V, V→V=V. Correto!'},
+              {q:'P=V, Q=F → (P∨Q)→Q = ?',ch:['V','F','Indefinido','Depende'],ok:1,why:'P∨Q=V, V→F=F. Esta é a única linha falsa dessa tabela!'},
+              {q:'Uma proposição sempre verdadeira independente dos valores é chamada de:',ch:['Contradição','Contingência','Tautologia','Bicondicional'],ok:2,why:'Tautologia: sempre V. Contradição: sempre F. Contingência: depende dos valores.'},
+            ]}
+          ]
+        },
+        {
+          id:'rl-venn-c', name:'DIAGRAMA DE VENN', emoji:'⭕', xp:120,
+          prereq:{id:'rl-tabela-c',msg:'Venn usa quantificadores. Você já entende "Todo", "Algum" e "Nenhum"?'},
+          desc:'Representar proposições com conjuntos. Exatamente como na Prova 2.',
+          steps:[
+            {type:'lesson',label:'💡 VENN — CONCEITO',title:'Círculos que Contam Histórias',body:`
+              <div class="box-an">🎂 <strong>Imagine uma festa de aniversário.</strong><br>
+Tem uma mesa de pessoas que gostam de chocolate. Outra mesa de pessoas que gostam de morango.<br>
+Algumas pessoas gostam dos dois — elas ficam sentadas NO MEIO das duas mesas.<br><br>
+No Venn, cada mesa é um <strong>círculo</strong>. O meio se chama <strong>intersecção</strong>!</div>
+              <div class="box-ex">TODO A é B      → O círculo A fica COMPLETAMENTE dentro de B
+                                [A ⊂ B]
+
+ALGUM A é B     → Os círculos se TOCAM (intersecção não-vazia)
+                                [A ∩ B ≠ ∅]
+
+NENHUM A é B    → Os círculos ficam SEPARADOS, sem qualquer toque
+                                [A ∩ B = ∅]
+
+ALGUM A não é B → Parte de A fica FORA de B (A não cabe todo dentro de B)
+                                [A ⊄ B]</div>`
+            },
+            {type:'lesson',label:'📝 QUESTÃO RESOLVIDA',title:'Questão Real da Prova 2 — UFPR',body:`
+              <p><strong>Enunciado original:</strong></p>
+              <div class="box-ex">Conjuntos de estudantes:
+A = Participam de projetos de pesquisa
+B = Utilizam Python
+C = Recebem bolsa acadêmica
+
+P: "Todo estudante bolsista participa de projetos de pesquisa."
+Q: "Existe pelo menos um estudante que usa Python mas NÃO participa de pesquisa."
+S: "Nenhum estudante que participa de pesquisa deixa de utilizar Python."</div>
+              <p><strong>Traduzindo cada proposição para o Venn:</strong></p>
+              <div class="box-ex">P: C ⊂ A   → o círculo BOLSISTAS fica dentro de PESQUISA
+S: A ⊂ B   → o círculo PESQUISA fica dentro de PYTHON
+Q: ∃ em B mas fora de A → parte de PYTHON fica fora de PESQUISA</div>
+              <div class="box-hl"><strong>Raciocínio em cadeia (silogismo):</strong><br>
+P diz: C ⊂ A (todo bolsista faz pesquisa)<br>
+S diz: A ⊂ B (todo pesquisador usa Python)<br>
+Logo: C ⊂ A ⊂ B → <strong>Todo bolsista usa Python!</strong><br>
+Q confirma: mas nem todo usuário de Python é pesquisador.</div>
+              <div class="box-cu">💡 Ordem de encaixe dos círculos: B (maior) contém A, que contém C. Com uma parte de B sobressaindo fora de A (por causa de Q).</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ',title:'Quiz — Venn',questions:[
+              {q:'"Todo TYU é verde." No diagrama:',ch:['Círculos sobrepostos parcialmente','TYU fica dentro de Verde','Verde fica dentro de TYU','Círculos separados'],ok:1,why:'TODO A é B = A ⊂ B. O círculo menor (TYU) fica completamente dentro do maior (Verde).'},
+              {q:'"Nenhum TYU é AUGR." No diagrama:',ch:['Sobreposição total','TYU dentro de AUGR','Círculos totalmente separados','AUGR dentro de TYU'],ok:2,why:'"Nenhum" = A ∩ B = ∅. Os círculos não se tocam de forma alguma.'},
+              {q:'P1: Todo AUGR é amarelo. P2: Todo TYU é AUGR. Conclusão:',ch:['Algum TYU é amarelo','Nenhum TYU é amarelo','Todo TYU é amarelo','Impossível concluir'],ok:2,why:'Silogismo: TYU ⊂ AUGR e AUGR ⊂ Amarelo → TYU ⊂ Amarelo. Todo TYU é amarelo!'},
+              {q:'P1: Todo AUGR é amarelo. P2: Alguns TYU são AUGR. Conclusão:',ch:['Todo TYU é amarelo','Algum TYU é amarelo','Nenhum TYU é amarelo','Impossível concluir'],ok:1,why:'Os TYU que são AUGR também são amarelos (por P1). Mas não TODOS os TYU, apenas os que são AUGR.'},
+            ]}
+          ]
+        },
+        {
+          id:'rl-boss-c', name:'👾 BOSS — LÓGICA COMPLETO', emoji:'💀', xp:200, isBoss:true,
+          desc:'Boss completo com todas as questões das 3 provas da UFPR.',
+          prereq:{id:'rl-venn-c',msg:'O Boss usa TUDO: tabelas, Venn, quantificadores, negação. Você está pronto?'}
+        }
+      ]
+    }
+  ]
+},
+{
+  id:'derivadas', name:'DERIVADAS', emoji:'📐',
+  desc:'Custo marginal, receita marginal, pontos críticos e esboço de gráficos. Conteúdo completo das listas e Prova 1 e 3 da UFPR.',
+  color:'#3fb950',
+  sessions:[
+    {
+      id:'resumo', label:'⚡ RESUMO RÁPIDO', desc:'O essencial para a prova.',
+      phases:[
+        {
+          id:'d-intro-r', name:'O QUE É DERIVADA?', emoji:'🚀', xp:70, prereq:null,
+          desc:'A ideia principal de derivada em 5 minutos.',
+          steps:[
+            {type:'lesson',label:'💡 DERIVADA',title:'Derivada é Velocidade de Mudança',body:`
+              <div class="box-an">🚗 <strong>Imagine que você está num carro.</strong><br>
+O velocímetro mostra 80 km/h. Isso não é onde você está — é <strong>quão rápido você está mudando de lugar</strong>.<br>
+A derivada é exatamente isso: a "velocidade" com que uma função muda!</div>
+              <div class="box-hl"><strong>Regras básicas (as que mais caem):</strong><br>
+• f(x) = c → f'(x) = 0 (constante some)<br>
+• f(x) = xⁿ → f'(x) = n·xⁿ⁻¹ (regra da potência)<br>
+• f(x) = c·xⁿ → f'(x) = c·n·xⁿ⁻¹<br>
+• Soma: (f+g)' = f' + g'</div>
+              <div class="box-ex">f(x) = 3x² + 5x + 2
+f'(x) = 6x + 5
+
+f(x) = x⁴ + 3x³ − 5x
+f'(x) = 4x³ + 9x² − 5</div>
+              <div class="box-warn">📌 Para pontos críticos: f'(x) = 0 e resolva para x.<br>
+f''(x) > 0 → MÍNIMO | f''(x) < 0 → MÁXIMO | f''(x) = 0 → INFLEXÃO</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ',title:'Quiz Rápido — Derivadas',questions:[
+              {q:'f(x) = 4x³. Qual é f\'(x)?',ch:['4x²','12x²','12x³','3x²'],ok:1,why:'Regra da potência: n·xⁿ⁻¹ = 3·4·x² = 12x².'},
+              {q:'f(x) = x⁴ + 3x³ − 5x. Qual é f\'(x)?',ch:['4x³ + 9x² − 5','4x³ + 9x²','4x + 9x − 5','3x³ + 6x² − 5'],ok:0,why:'Deriva cada termo: 4x³, depois 9x² (3·3=9), depois −5 (1·coeficiente do x).'},
+              {q:'Se f\'(x) = 0 e f\'\'(x) > 0, o ponto é:',ch:['Máximo local','Mínimo local','Ponto de inflexão','Nenhuma das anteriores'],ok:1,why:'f\'\'> 0 = concavidade para cima = vale = MÍNIMO.'},
+            ]}
+          ]
+        },
+        {
+          id:'d-custo-r', name:'CUSTO MARGINAL', emoji:'💰', xp:80,
+          prereq:{id:'d-intro-r',msg:'Custo marginal é a derivada do custo. Você já entende derivadas básicas?'},
+          desc:'C\'(q) = custo de produzir mais uma unidade.',
+          steps:[
+            {type:'lesson',label:'💡 CUSTO MARGINAL',title:'O Custo de Mais Uma Unidade',body:`
+              <div class="box-an">🍕 <strong>Você tem uma pizzaria.</strong><br>
+Já fez 100 pizzas hoje. Quanto custa fazer a 101ª?<br>
+Isso se chama <strong>custo marginal</strong> — o custo de produzir UMA unidade a mais.</div>
+              <div class="box-hl">Custo Marginal = C'(q) → derivada da função de custo!</div>
+              <div class="box-ex">Prova 3 UFPR: C(q) = −100q + 5q²
+C'(q) = −100 + 10q  ← custo marginal
+C'(10) = −100 + 100 = 0  ← custo marginal mínimo quando q=10 ✓</div>
+              <p>Da Prova 1 e 3: <strong>Lucro = Receita − Custo</strong></p>
+              <div class="box-ex">p(q) = 300 − 0.5q  (função preço)
+R(q) = p(q)·q = 300q − 0.5q²  (receita total)
+C(q) = 190 + 5q + 0.1q²  (custo total)
+L(q) = R − C = 110q − 0.6q²  (lucro)
+LM = L'(q) = 110 − 1.2q  ← Lucro Marginal = opção E da prova!</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ',title:'Quiz — Custo Marginal',questions:[
+              {q:'C(q) = −100q + 5q². Qual é o custo marginal C\'(q)?',ch:['−100 + 5q','−100 + 10q','100 − 10q','5q − 100'],ok:1,why:'Derivada: −100 (constante com q) → −100, e 5q² → 10q. Logo C\'(q) = −100 + 10q.'},
+              {q:'Para C(q) = −100q + 5q², o custo marginal mínimo ocorre em:',ch:['q = 5','q = 10','q = 20','q = 0'],ok:1,why:'C\'(q) = −100 + 10q. Mínimo quando C\'\'(q) = 10 > 0 (sempre mínimo). Ponto: C\'(q)=0 → q=10.'},
+              {q:'Lucro L(q) = R(q) − C(q). p(q)=300−0.5q, C(q)=190+5q+0.1q². Qual é L\'(q)?',ch:['295 − 1.2q','110 − 1.2q','300 − 1.2q','295 − 0.6q'],ok:0,why:'R(q)=300q−0.5q², L=R−C=110q−0.6q², L\'=110−1.2q. Mas a pergunta é com p(q)=300−0.5q → R=300q−0.5q², LM=295−1.2q (Prova 3, opção E).'},
+            ]}
+          ]
+        },
+        {
+          id:'d-boss-r', name:'👾 BOSS RÁPIDO — DERIVADAS', emoji:'💀', xp:150, isBoss:true, bossMode:'derivadas',
+          desc:'Questões das provas reais sobre derivadas.',
+          prereq:{id:'d-custo-r',msg:'O Boss usa derivadas, custo e pontos críticos. Preparado?'}
+        }
+      ]
+    },
+    {
+      id:'completo', label:'📚 COMPLETO', desc:'Toda a lista de exercícios + provas, com explicação.',
+      phases:[
+        {
+          id:'d-intro-c', name:'O QUE É DERIVADA?', emoji:'🚀', xp:90, prereq:null,
+          desc:'Do zero: intuição, regras e primeiros exercícios da lista.',
+          steps:[
+            {type:'intro',label:'📖 INTRODUÇÃO',title:'Derivada: A Velocidade das Coisas',body:`
+              <div class="hint-box"><span class="hint-owl">🦉</span>Derivada é um dos temas que mais assusta. Mas vou te provar que você já conhece a ideia — só não sabia o nome!</div>
+              <div class="box-an">🌡️ <strong>Você acaba de acordar e olha o termômetro.</strong><br>
+Está 20°C. Uma hora depois, está 25°C. O quanto a temperatura <strong>mudou</strong> em 1 hora?<br>
+→ 5°C por hora. Isso é uma taxa de variação.<br><br>
+A derivada é a versão matemática disso — mas medindo a mudança num instante <em>exatamente</em>, não num intervalo.</div>
+              <div class="box-an">🚗 <strong>No carro:</strong> a posição é f(t). A velocidade é f'(t).<br>
+A velocidade diz o quão rápido a posição está mudando.<br>
+A derivada diz o quão rápido <em>qualquer coisa</em> está mudando!</div>
+              <div class="box-cu">💡 <strong>Definição técnica:</strong> A derivada f'(x) é o limite da taxa de variação média de f quando o intervalo tende a zero.<br>
+f'(x) = lim[h→0] (f(x+h) − f(x)) / h</div>`
+            },
+            {type:'lesson',label:'📏 REGRAS',title:'As Regras de Derivação (o Atalho!)',body:`
+              <div class="box-an">🎯 <strong>Na vida real, não calculamos sempre pelo limite.</strong><br>
+Existem atalhos — como decorar as regras de divisão em vez de somar repetidamente.<br>
+Essas regras saem direto da lista de exercícios da UFPR!</div>
+              <div class="box-hl"><strong>REGRA 1 — Constante:</strong> f(x) = c → f'(x) = 0<br>
+Número sozinho? Derivada é zero! Constante não muda, velocidade = 0.</div>
+              <div class="box-hl"><strong>REGRA 2 — Potência:</strong> f(x) = xⁿ → f'(x) = n·xⁿ⁻¹<br>
+"Desce o expoente e diminui 1."</div>
+              <div class="box-hl"><strong>REGRA 3 — Constante × Potência:</strong> f(x) = c·xⁿ → f'(x) = c·n·xⁿ⁻¹</div>
+              <div class="box-hl"><strong>REGRA 4 — Soma/Subtração:</strong> (f ± g)' = f' ± g'<br>
+"Deriva termo a termo."</div>
+              <div class="box-ex">Exercícios 1 a 5 da lista UFPR — Calcule f'(x):
+
+1. f(x) = x² + 5        → f'(x) = 2x
+2. f(x) = 4x² + 7       → f'(x) = 8x
+3. f(x) = x³ + 3x + 10  → f'(x) = 3x² + 3
+4. f(x) = x⁵ − 6x³ + 2x → f'(x) = 5x⁴ − 18x² + 2
+5. f(x) = (2x+1)² − 2   → expanda primeiro: 4x² + 4x + 1 − 2 = 4x² + 4x − 1
+                          → f'(x) = 8x + 4</div>
+              <div class="box-cu">💡 Quando tiver potência com expressão como (2x+1)², sempre EXPANDA primeiro usando (a+b)² = a²+2ab+b², depois derive!</div>`
+            },
+            {type:'lesson',label:'🔗 REGRA DO PRODUTO',title:'Regra do Produto — Lista UFPR',body:`
+              <div class="box-an">🧩 <strong>Imagine dois grupos se combinando.</strong><br>
+Se f e g estão sendo MULTIPLICADOS, não dá pra derivar cada um separado.<br>
+É como dividir uma pizza entre dois grupos — você precisa considerar os dois juntos!</div>
+              <div class="box-hl"><strong>REGRA DO PRODUTO:</strong> (f · g)' = f' · g + f · g'<br>
+"Deriva o primeiro, mantém o segundo. Mantém o primeiro, deriva o segundo. Some!"</div>
+              <div class="box-ex">Exercício 6 da lista: f(x) = (2x³ − 2)(x² + 4)
+f = 2x³ − 2    →  f' = 6x²
+g = x² + 4     →  g' = 2x
+
+f'(x) = 6x²·(x²+4) + (2x³−2)·2x
+      = 6x⁴ + 24x² + 4x⁴ − 4x
+      = 10x⁴ + 24x² − 4x</div>
+              <div class="box-ex">Exercício 10 da lista: f(x) = (2x + 1)⁴·(x − 2)
+Aqui você pode expandir OU usar produto + regra da cadeia.
+Forma mais simples: expandir (2x+1)⁴ e depois multiplicar por (x−2).</div>`
+            },
+            {type:'lesson',label:'⛓️ REGRA DA CADEIA',title:'Regra da Cadeia — Função Composta',body:`
+              <div class="box-an">🎠 <strong>Pense numa roda-gigante dentro de um parque.</strong><br>
+O parque gira (função externa). A roda-gigante gira em cima disso (função interna).<br>
+Para saber a velocidade total, você multiplica as duas velocidades!</div>
+              <div class="box-hl"><strong>REGRA DA CADEIA:</strong> [f(g(x))]' = f'(g(x)) · g'(x)<br>
+"Deriva o de fora, mantém o de dentro. Multiplica pela derivada do de dentro."</div>
+              <div class="box-ex">Exercício 7 da lista: f(x) = (x − 1)⁵
+Fora: u⁵  →  deriva: 5u⁴
+Dentro: u = x − 1  →  deriva: 1
+f'(x) = 5(x−1)⁴ · 1 = 5(x−1)⁴
+
+Exercício 8: f(x) = (x² + 2x)⁴
+Fora: u⁴  →  4u³
+Dentro: x²+2x  →  2x+2
+f'(x) = 4(x²+2x)³ · (2x+2)
+
+Exercício 9: f(x) = (x²+1)(x²−3)(x+4)
+→ Use produto várias vezes ou expanda tudo.
+É um polinômio: pode expandir e derivar normalmente!</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ — LISTA',title:'Quiz — Derivadas da Lista',questions:[
+              {q:'f(x) = x³ + 3x + 10. Qual é f\'(x)?',ch:['3x² + 3','3x + 3','3x² + 3x','x² + 3'],ok:0,why:'Termo a termo: x³→3x², 3x→3, 10→0. Logo f\'(x) = 3x² + 3.'},
+              {q:'f(x) = (x−1)⁵. Pela regra da cadeia, f\'(x) =',ch:['5(x−1)⁴','(x−1)⁴','5(x−1)','5x⁴'],ok:0,why:'Regra da cadeia: 5(x−1)⁴ · (1) = 5(x−1)⁴.'},
+              {q:'f(x) = (2x³−2)(x²+4). Qual a derivada usando a regra do produto?',ch:['6x²(x²+4) + (2x³−2)·2x','6x²·2x','(6x²)(2x)','4x⁵−4x'],ok:0,why:'(f·g)\'= f\'g + fg\'. f=2x³−2, f\'=6x². g=x²+4, g\'=2x. Resultado: 6x²(x²+4)+(2x³−2)·2x.'},
+              {q:'f(x) = (x²+2x)⁴. Pela regra da cadeia, f\'(x) =',ch:['4(x²+2x)³','4(x²+2x)³·(2x+2)','4(x²+2x)·(2x+2)','(x²+2x)³·(2x+2)'],ok:1,why:'Fora: u⁴→4u³. Dentro: x²+2x→2x+2. Multiplica: 4(x²+2x)³·(2x+2).'},
+            ]}
+          ]
+        },
+        {
+          id:'d-pontos-c', name:'PONTOS CRÍTICOS', emoji:'📍', xp:120,
+          prereq:{id:'d-intro-c',msg:'Pontos críticos usam f\'(x)=0 e f\'\'(x). Você já deriva polinômios?'},
+          desc:'Máximos, mínimos e inflexão — das provas e lista de exercícios.',
+          steps:[
+            {type:'intro',label:'📖 INTRO',title:'Onde a Função Para de Subir ou Descer?',body:`
+              <div class="hint-box"><span class="hint-owl">🦉</span>Esta é a parte que mais caiu nas provas! Classificar pontos críticos. Vamos com calma.</div>
+              <div class="box-an">🏔️ <strong>Imagine uma montanha.</strong><br>
+Você está subindo. Em algum momento, você chega no <strong>topo</strong> — aí começa a descer.<br>
+No topo, você não está subindo nem descendo. Essa é a ideia de ponto crítico!<br><br>
+No vale (fundo do vale), acontece o contrário — você para de descer e começa a subir.</div>
+              <div class="box-hl">📌 Ponto crítico: onde f'(x) = 0 (derivada é zero = velocidade de mudança é zero).<br><br>
+Como classificar:<br>
+• f''(x) > 0 → concavidade ↑ → MÍNIMO (vale, fundo)<br>
+• f''(x) < 0 → concavidade ↓ → MÁXIMO (topo, pico)<br>
+• f''(x) = 0 → INFLEXÃO (mudança de concavidade)</div>`
+            },
+            {type:'lesson',label:'📝 EXEMPLOS DAS PROVAS',title:'Questões Reais UFPR — Pontos Críticos',body:`
+              <p><strong>Questão 12 da Prova 3 / Questão 7 da Prova 1 / Exame 2023:</strong></p>
+              <div class="box-ex">f(x) = 2x³ − 0.25x⁴ + E  (onde E é constante)
+
+Passo 1: f'(x) = 6x² − x³ = x²(6 − x)
+         f'(x) = 0 → x = 0 ou x = 6  ← pontos críticos
+
+Passo 2: f''(x) = 12x − 3x²
+
+Passo 3: Avaliar f'' em cada ponto:
+  x = 0: f''(0) = 0 → INFLEXÃO (nem máximo nem mínimo)
+  x = 6: f''(6) = 72 − 108 = −36 < 0 → MÁXIMO
+
+Resposta: x = 6 é MÁXIMO e x = 0 é INFLEXÃO ← alternativa B/D das provas!</div>
+              <p><strong>Questão 9 da Prova 1 / Questão 14 da Prova 3:</strong></p>
+              <div class="box-ex">f(x) = (x−3)(x−5)(x−1)
+
+Passo 1: Expanda o produto.
+(x−3)(x−5) = x² − 8x + 15
+(x²−8x+15)(x−1) = x³ − 9x² + 23x − 15
+
+Passo 2: f'(x) = 3x² − 18x + 23
+
+Passo 3: f'(x) = 0 → use Bhaskara:
+Δ = 18² − 4·3·23 = 324 − 276 = 48
+x = (18 ± √48) / 6 = (18 ± 4√3) / 6 = 3 ± (2√3)/3
+
+x₁ ≈ 3 − 1.15 ≈ 1.85  (Máximo, pois f'' < 0 aqui)
+x₂ ≈ 3 + 1.15 ≈ 4.15  (Mínimo, pois f'' > 0 aqui)
+
+A dica da prova: "use Bhaskara, respostas serão irracionais" ← confirmado!</div>
+              <div class="box-cu">💡 Quando o prof diz "use Bhaskara", espere raízes com √. Se aparecer número "limpo" (inteiro), revise seus cálculos!</div>`
+            },
+            {type:'lesson',label:'📈 ANÁLISE COMPLETA',title:'Análise de Intervalos — Crescente/Decrescente',body:`
+              <div class="box-an">🛷 <strong>Imagine uma criança num escorregador.</strong><br>
+Ela sobe (crescente), chega no topo (máximo), desce (decrescente), chega no fundo (mínimo), sobe de novo.<br>
+A derivada nos diz em cada trecho se está subindo ou descendo!</div>
+              <div class="box-hl">📊 Como fazer análise de intervalos:<br>
+1. Ache todos os zeros de f'(x)<br>
+2. Monte uma tabela de sinais de f'(x)<br>
+3. f'(x) > 0 → função CRESCENTE ↑<br>
+4. f'(x) < 0 → função DECRESCENTE ↓</div>
+              <div class="box-ex">f(x) = (x−3)(x−5)(x−1) → f'(x) = 3x²−18x+23
+Zeros de f': x₁ ≈ 1.85 e x₂ ≈ 4.15
+
+Intervalos:
+(−∞, 1.85) → f' > 0 → CRESCENTE ↑
+(1.85, 4.15) → f' < 0 → DECRESCENTE ↓
+(4.15, +∞) → f' > 0 → CRESCENTE ↑
+
+Função positiva/negativa: zeros de f(x) = raízes da função
+Raízes de f: x = 1, x = 3, x = 5
+Sinal de f: +, −, +, − (alternando a partir da esquerda, com grau ímpar)</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ',title:'Quiz — Pontos Críticos',questions:[
+              {q:'f\'\'(x) = −5 num ponto crítico. Esse ponto é:',ch:['Mínimo local','Máximo local','Ponto de inflexão','Nenhuma das anteriores'],ok:1,why:'f\'\'< 0 = concavidade para baixo = pico = MÁXIMO.'},
+              {q:'f(x) = 2x³ − 0.25x⁴. Pontos críticos em x=0 e x=6. f\'\'(0) = 0. O que é x=0?',ch:['Mínimo','Máximo','Inflexão','Ponto de sela'],ok:2,why:'Quando f\'\'= 0, usamos o teste de derivada de ordem superior ou análise de sinal. Neste caso, x=0 é inflexão.'},
+              {q:'f\'(x) = 3x²−18x+23. Para f\'(x)=0, qual fórmula usar?',ch:['Fórmula das razões','Regra de Cramer','Fórmula de Bhaskara','Fatoração direta'],ok:2,why:'Equação de 2º grau com Δ não-quadrado perfeito → Bhaskara! As raízes serão irracionais, como a prova avisou.'},
+              {q:'f\'(x) > 0 num intervalo significa que f é:',ch:['Decrescente','Côncava para baixo','Crescente','Com máximo nesse intervalo'],ok:2,why:'f\'> 0 → a função está subindo (crescente). f\'< 0 → descendo (decrescente).'},
+            ]}
+          ]
+        },
+        {
+          id:'d-custo-c', name:'CUSTO, RECEITA E LUCRO MARGINAL', emoji:'💰', xp:130,
+          prereq:{id:'d-pontos-c',msg:'Custo marginal usa derivadas diretas. Você já domina f\'(x)?'},
+          desc:'Lista completa de custos marginais + questões das provas 1 e 3.',
+          steps:[
+            {type:'intro',label:'📖 INTRO',title:'Economia com Derivadas!',body:`
+              <div class="hint-box"><span class="hint-owl">🦉</span>Este é o conteúdo favorito do Prof. Pécora nas provas! Caiu nas Provas 1, 3 e no Exame. Vamos dominar!</div>
+              <div class="box-an">🏭 <strong>Você tem uma fábrica de camisetas.</strong><br>
+Já está fazendo 50 camisetas por dia. O chefe pergunta: "Quanto custa fazer a 51ª camiseta?"<br>
+Isso é o <strong>custo marginal</strong> — o custo extra de produzir <em>mais uma</em> unidade.<br><br>
+Matematicamente: é a DERIVADA da função de custo!</div>`
+            },
+            {type:'lesson',label:'💡 CUSTO MARGINAL',title:'Lista de Custos Marginais — UFPR',body:`
+              <div class="box-hl">Custo Marginal = C'(q) = derivada de C(q)</div>
+              <div class="box-ex">Lista de Exercícios do Prof. Pécora (October 2024):
+
+Ex 1: C(x) = x² − 3x
+  C'(x) = 2x − 3  ← custo marginal
+  C'(5) = 10 − 3 = 7  ← custo da 5ª unidade
+
+Ex 2: C(q) = q² − 3q
+  C'(q) = 2q − 3
+
+Ex 3: C(x) = x⁴ + 9x
+  C'(x) = 4x³ + 9
+
+Ex 4: C(q) = q³ + 9q² − 10q
+  C'(q) = 3q² + 18q − 10
+
+Ex 5: C(x) = 8x² + 4x + 7
+  C'(x) = 16x + 4
+
+Ex 6: (função com 5q)
+  Se C(q) = 5q² → C'(q) = 10q</div>`
+            },
+            {type:'lesson',label:'💰 RECEITA E LUCRO',title:'Receita, Preço e Lucro Marginal',body:`
+              <div class="box-an">🛍️ <strong>Conceitos de negócio traduzidos para matemática:</strong><br>
+• Preço: p(q) = quanto cobra por unidade (função da quantidade)<br>
+• Receita: R(q) = p(q) × q (total arrecadado)<br>
+• Custo: C(q) = total gasto<br>
+• Lucro: L(q) = R(q) − C(q)</div>
+              <div class="box-hl">Receita Marginal = R'(q)<br>Lucro Marginal = L'(q) = R'(q) − C'(q)</div>
+              <div class="box-ex">Lista pg1: p(x) = 100 − 2x (função preço)
+R(x) = p(x)·x = 100x − 2x²  (receita total)
+R'(x) = 100 − 4x  (receita marginal)
+Máximo: R'(x)=0 → 100−4x=0 → x=25
+R(25) = 100·25 − 2·625 = 2500 − 1250 = R$1250 (máximo)</div>
+              <div class="box-ex">PROVA 1 e PROVA 3 da UFPR:
+p(q) = 300 − 0.5q (ou 800 − 0.5q em outra versão)
+C(q) = 190 + 5q + 0.1q²
+
+Lucro: L(q) = p(q)·q − C(q)
+     = (300 − 0.5q)q − (190 + 5q + 0.1q²)
+     = 300q − 0.5q² − 190 − 5q − 0.1q²
+     = 110q − 0.6q² − 190
+
+Lucro Marginal: LM = L'(q) = 110 − 1.2q  ← opção correta da prova!
+
+Para máximo: LM = 0 → 110 − 1.2q = 0 → q = 110/1.2 ≈ 91.67 ≈ 92 unidades</div>
+              <div class="box-cu">💡 Da Prova 3: p(q) = 300−0.5q → R=300q−0.5q². C(q)=190+5q+0.1q².<br>
+LM = 295−1.2q (opção E da prova). Não confunda com a versão com p=800−0.5q da Prova 1!</div>`
+            },
+            {type:'lesson',label:'📈 GRÁFICOS E LIMITES',title:'Esboço de Gráficos e Comportamento no Infinito',body:`
+              <div class="box-an">🎢 <strong>Imagine que você vê um gráfico de longe.</strong><br>
+A pergunta é: para onde a curva vai quando x fica muito grande (x→+∞) ou muito negativo (x→−∞)?<br>
+Isso se chama comportamento assintótico!</div>
+              <div class="box-hl">Da lista pg3 (Prof. Pécora, Março 2026):<br>
+• Identifique o crescimento em relação a f(x)=x (referência linear)<br>
+• Verifique se existe limite no infinito (assíntota horizontal)<br>
+• f(x) = x² + 1 → cresce mais rápido que x → sem assíntota</div>
+              <div class="box-ex">Questão 13 da Prova 3 — Esboço com informações:
+  f(0) = 0  → passa pela origem
+  f'(0) < 0  → na origem está decrescendo
+  Raízes: x = −1, x = 1, e uma terceira em x < −3
+  lim(x→+∞) f(x) = 0  → assíntota horizontal em y=0 à direita
+  lim(x→−∞) f(x) = +∞ → cresce sem limite à esquerda
+
+Como esboçar:
+1. Marque os zeros: x≈−3.something, x=−1, x=1
+2. Na origem: f(0)=0 e f'(0)<0 → curva descendo em x=0
+3. Para x muito grande → y→0 (se achata)
+4. Para x muito negativo → y→+∞ (sobe)</div>`
+            },
+            {type:'lesson',label:'📈 LIMITES',title:'Calcule os Limites — Prova 3 UFPR',body:`
+              <div class="box-an">🏁 <strong>O limite é como a linha de chegada.</strong><br>
+Você pergunta: "Para onde f(x) vai quando x se aproxima de algum valor?"<br>
+É como perguntar: "Se x quase chega em 3, qual o valor de f(x)?"</div>
+              <div class="box-hl">Dica da Prova 3 UFPR:<br>
+Para limite de racional quando x→a (e o denominador → 0), fatore numerador e denominador e cancele!</div>
+              <div class="box-ex">Questões de limite da Prova 3:
+
+Limite 1: lim[x→?] (3x² + 12x + 17) / (4x² − 7x + 12)
+→ Substitua direto (se denominador ≠ 0):
+  Numerador: 3(?)² + ...
+  Se forma 0/0, fatore!
+
+Limite 2: lim[x→+∞] (3x² + 12x + 17) / (4x² − 7x + 12)
+→ Divida tudo por x² (maior potência):
+  = (3 + 12/x + 17/x²) / (4 − 7/x + 12/x²)
+  → quando x→∞: termos com x viram 0
+  = 3/4  ← resposta!
+
+Limite 3: lim[x→0] 1/x² → +∞ (cresce sem limite)</div>
+              <div class="box-cu">💡 Regra dos limites no infinito para racionais:<br>
+• Grau numerador = grau denominador → limite = razão dos coeficientes líderes<br>
+• Grau numerador < grau denominador → limite = 0<br>
+• Grau numerador > grau denominador → limite = ±∞</div>`
+            },
+            {type:'lesson',label:'🧮 ÁRVORE DE CRESCIMENTO',title:'Exercício Real da Lista — Árvore!',body:`
+              <div class="box-an">🌳 <strong>Uma árvore cresce ao longo do tempo.</strong><br>
+A altura da árvore é uma função do tempo. A derivada nos diz com que velocidade ela cresce!<br>
+Se a derivada é positiva → ainda crescendo. Se zero → parou de crescer. Se negativa → encolhendo!</div>
+              <div class="box-ex">Exercício da lista pg2 (Lista UFPR):
+A(t) = 0.18t⁴ + 0.9t³ + 2t² + t  (altura em função do tempo)
+
+Taxa de crescimento = A'(t) (derivada!):
+A'(t) = 0.72t³ + 2.7t² + 4t + 1
+
+Para saber se a árvore cresce rápido, devagar ou parou:
+→ Calcule A'(t) num ponto específico.
+→ Se A'(t) > 0: ainda crescendo
+→ Se A'(t) = 0: parou de crescer nesse instante
+→ Se A'(t) < 0: decresce (improvável para altura!)</div>
+              <div class="box-hl">Esse exercício mostra a beleza da derivada: ela transforma "quanto cresceu total" em "quanto está crescendo agora"!</div>`
+            },
+            {type:'quiz',label:'❓ QUIZ COMPLETO',title:'Quiz Completo — Derivadas das Provas',questions:[
+              {q:'C(x) = 4x³ + 9x² − 8x + 2. Qual é C\'(x)?',ch:['12x² + 9x − 8','12x² + 18x − 8','12x² + 18x − 8x','4x² + 9x − 8'],ok:1,why:'Deriva termo a termo: 4x³→12x², 9x²→18x, −8x→−8, 2→0. Logo 12x²+18x−8. (Questão 7 da Prova 3!)'},
+              {q:'R(x) = 100x − 2x² (receita). Para qual x a receita é máxima?',ch:['x = 25','x = 50','x = 100','x = 10'],ok:0,why:'R\'(x)=100−4x=0 → x=25. Verifique: R\'\'=−4 < 0 → máximo! (Lista pg1 exercício 1)'},
+              {q:'L(q) = 110q − 0.6q² − 190. Qual o lucro marginal LM = L\'(q)?',ch:['110 − 0.6q','110 − 1.2q','110 + 1.2q','−0.6q'],ok:1,why:'L\'(q) = 110 − 1.2q. Lembre: derivada de aq² é 2aq. 0.6×2=1.2. (Questão 10 e 11 da Prova 3!)'},
+              {q:'Para L\'(q) = 110 − 1.2q = 0, qual é q (quantidade de lucro máximo)?',ch:['q ≈ 91','q ≈ 55','q ≈ 110','q ≈ 132'],ok:0,why:'110 = 1.2q → q = 110/1.2 ≈ 91.67. Arredondando: ≈ 92 unidades. (Questão 11 da Prova 3!)'},
+   
+              {q:'f(x)=(x−1)⁵. f\'(x) = ?',ch:['(x−1)⁴','5(x−1)⁴','5x⁴','5(x−1)³'],ok:1,why:'Regra da cadeia: 5(x−1)⁴·1 = 5(x−1)⁴. (Exercício 7 da lista UFPR)'},
+            ]}
+          ]
+        },
+        {
+          id:'d-boss-c', name:'👾 BOSS — DERIVADAS COMPLETO', emoji:'💀', xp:250, isBoss:true, bossMode:'derivadas',
+          desc:'Todas as questões de derivadas das 3 provas. Desafio máximo!',
+          prereq:{id:'d-custo-c',msg:'O Boss usa TUDO sobre derivadas. Tem certeza que está pronto?'},
+          steps:[]
+        }
+      ]
+    }
+  ]
+},
+{id:'locked1',name:'ESTATÍSTICA',emoji:'📈',desc:'Média, probabilidade. Em breve!',color:'#bc8cff',locked:true,sessions:[]},
+{id:'locked2',name:'MATRIZES',emoji:'🔢',desc:'Sistemas lineares. Em breve!',color:'#ff8c00',locked:true,sessions:[]}
+];
+
+const BOSS_LOGICA=[
+  {q:'Negue: "Todo estudante bolsista participa de pesquisa."',ch:['Nenhum bolsista faz pesquisa','Algum bolsista NÃO faz pesquisa','Todo não-bolsista faz pesquisa','Algum bolsista faz pesquisa'],ok:1,why:'Negar ∀ → ∃¬. "Todo X é Y" → "Algum X NÃO é Y". (Proposição P — Prova 2 UFPR)'},
+  {q:'P=V, Q=V → (P ∧ Q) → P = ?',ch:['F','V','Indefinido','Depende de Q'],ok:1,why:'P∧Q=V, V→V=V. (Tabela da Prova 2 UFPR)'},
+  {q:'P=V, Q=F → (P ∨ Q) → Q = ?',ch:['V','F','Tautologia','Contradição'],ok:1,why:'P∨Q=V, V→F=F. Único caso falso dessa tabela! (Prova 2 UFPR)'},
+  {q:'C ⊂ A e A ⊂ B. Qual a conclusão direta?',ch:['C ⊂ B','B ⊂ C','C ∩ B = ∅','A = B'],ok:0,why:'Silogismo: C⊂A e A⊂B → C⊂B. (Conclusão do Diagrama de Venn da Prova 2)'},
+  {q:'P1: Todo TYU é verde. P2: Algum TYU é AUGR. Logo:',ch:['Todo AUGR é verde','Algum AUGR é verde','Nenhum AUGR é verde','Impossível concluir'],ok:1,why:'TYU que é AUGR também é verde (por P1). Logo algum AUGR é verde. (Exame 2023 UFPR)'},
+  {q:'Negue: "Nenhum pássaro é marrom."',ch:['Todo pássaro é marrom','Algum pássaro NÃO é marrom','Algum pássaro é marrom','Todo pássaro não é marrom'],ok:2,why:'"Nenhum X é Y" = ∀x¬Y(x). Negação = ∃xY(x) = "Algum X é Y". (Exame 2023 UFPR)'},
+  {q:'¬(P ∧ Q) = ?',ch:['¬P ∧ ¬Q','¬P ∨ ¬Q','P ∨ Q','¬P ∧ Q'],ok:1,why:'1ª Lei de De Morgan: ¬(P∧Q) = ¬P ∨ ¬Q.'},
+  {q:'¬(P → Q) = ?',ch:['¬P → ¬Q','¬P ∨ Q','P ∧ ¬Q','Q → P'],ok:2,why:'Negação da condicional: P ∧ ¬Q. A promessa só quebra se P aconteceu e Q não.'},
+];
+
+const BOSS_DERIVADAS=[
+  {q:'f(x) = 4x³ + 9x² − 8x + 2. f\'(x) = ? (Questão 7, Prova 3 UFPR)',ch:['12x²+9x−8','12x²+18x−8','4x²+18x−8','12x+18'],ok:1,why:'Deriva termo a termo: 4x³→12x², 9x²→18x, −8x→−8, 2→0. Resultado: 12x²+18x−8.'},
+  {q:'f(x) = (2x³−2)(x²+4). f\'(x) = ? (Ex 6 da lista)',ch:['10x⁴+24x²−4x','6x²(x²+4)','4x(2x³−2)','10x⁴−4x'],ok:0,why:'Produto: f\'g+fg\'. = 6x²(x²+4)+(2x³−2)·2x = 10x⁴+24x²−4x.'},
+  {q:'C(q)=−100q+5q². C\'(q)=0 quando: (Prova 3, Q9)',ch:['q=5','q=10','q=20','q=50'],ok:1,why:'C\'=−100+10q=0 → q=10. (C\'\'=10>0 confirma mínimo)'},
+  {q:'p(q)=300−0.5q, C(q)=190+5q+0.1q². LM = L\'(q) = ? (Prova 3, Q10)',ch:['110−1.2q','295−1.2q','110−0.6q','295−0.6q'],ok:1,why:'L=R−C=(300q−0.5q²)−(190+5q+0.1q²). Atenção: 300−5=295! L=295q−0.6q²−190. LM=295−1.2q. (Opção E!)'},
+  {q:'f(x) = (x−1)⁵. f\'(x) = ? (Ex 7 da lista)',ch:['(x−1)⁴','5(x−1)⁴','5x⁴','5(x−1)³'],ok:1,why:'Regra da cadeia: fora u⁵→5u⁴, dentro x−1→1. Resultado: 5(x−1)⁴.'},
+  {q:'f(x) = 2x³ − 0.25x⁴. f\'\'(6) = ? (Prova 3, Q12)',ch:['f\'\'>0 → mínimo','f\'\'>0 → máximo','f\'\' < 0 → máximo','f\'\' = 0 → inflexão'],ok:2,why:'f\'=6x²−x³, f\'\' =12x−3x². f\'\' (6)=72−108=−36<0 → MÁXIMO local.'},
+  {q:'f(x)=(x−3)(x−5)(x−1). f\'(x) é grau 2. Para f\'(x)=0, use:',ch:['Fatoração inteira','Regra de Cramer','Fórmula de Bhaskara','Completar quadrado'],ok:2,why:'Equação quadrática com Δ não perfeito → Bhaskara. As raízes serão irracionais, como a prova avisou!'},
+  {q:'lim[x→+∞] (3x²+12x+17)/(4x²−7x+12) = ? (Prova 3)',ch:['0','3/4','∞','4/3'],ok:1,why:'Graus iguais → razão dos coeficientes líderes = 3/4.'},
+  {q:'p(x)=100−2x (preço). R(x)=p·x. Máximo da receita em x=? (Lista pg1, Ex1)',ch:['x=10','x=25','x=50','x=100'],ok:1,why:'R(x)=100x−2x². R\'=100−4x=0 → x=25. R\'\' =−4<0 confirma máximo.'},
+];
+
+let S={xp:0,level:1,done:{},achs:[],curWorld:null,curSession:null,curPhase:null,step:0,qOk:0,qTotal:0,pre:null};
+function save(){localStorage.setItem('sc2',JSON.stringify(S))}
+function load(){try{const d=localStorage.getItem('sc2');if(d)S={...S,...JSON.parse(d)}}catch(e){}}
+function lvl(){return Math.floor(S.xp/300)+1}
+
+(function(){
+  const c=document.getElementById('particles'),ctx=c.getContext('2d');
+  let W,H,ps=[];
+  function rs(){W=c.width=innerWidth;H=c.height=innerHeight}
+  rs();
+  ps=Array.from({length:45},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,dx:(Math.random()-.5)*.3,dy:-Math.random()*.4-.1,a:Math.random(),col:['#58a6ff','#bc8cff','#ffd700','#3fb950','#26d9b1'][Math.floor(Math.random()*5)]}));
+  window.addEventListener('resize',rs);
+  (function draw(){ctx.clearRect(0,0,W,H);ps.forEach(p=>{ctx.globalAlpha=p.a*.35;ctx.fillStyle=p.col;ctx.fillRect(p.x,p.y,p.r*3,p.r*3);p.x+=p.dx;p.y+=p.dy;if(p.y<-10){p.y=H+10;p.x=Math.random()*W}if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10});ctx.globalAlpha=1;requestAnimationFrame(draw)})();
+})();
+
+function screen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+id).classList.add('active')}
+
+function showTitle(){updateTitleXP();document.getElementById('ach-count').textContent=S.achs.length;screen('title')}
+function updateTitleXP(){const lv=lvl(),xm=lv*300,pct=Math.min(S.xp/xm*100,100);document.getElementById('t-lvl').textContent=lv;document.getElementById('t-xpbar').style.width=pct+'%';document.getElementById('t-xptxt').textContent=S.xp+' / '+xm+' XP'}
+
+function showWorldSel(){
+  document.getElementById('ws-xp').textContent=S.xp;
+  document.getElementById('ws-lvl').textContent=lvl();
+  const g=document.getElementById('worlds-grid');g.innerHTML='';
+  WORLDS.forEach(w=>{
+    const card=document.createElement('div');
+    card.className='wcard'+(w.locked?' locked':'');
+    card.style.borderTopColor=w.color||'#58a6ff';
+    const tp=w.sessions?w.sessions.reduce((a,s)=>a+s.phases.length,0):0;
+    const dp=w.sessions?w.sessions.reduce((a,s)=>a+s.phases.filter(p=>S.done[p.id]).length,0):0;
+    const pct=tp?dp/tp*100:0;
+    card.innerHTML=`<span class="wcard-emoji">${w.emoji}</span><div class="wcard-name">${w.name}</div><div class="wcard-desc">${w.desc}</div><div class="wcard-bar"><div class="wcard-fill" style="width:${pct}%;background:${w.color||'#3fb950'}"></div></div><div class="wcard-meta">${dp}/${tp} FASES${w.locked?' — 🔒 EM BREVE':''}`;
+    if(!w.locked)card.onclick=()=>{S.curWorld=w;S.curSession=w.sessions[0];renderPhases();screen('phases')};
+    g.appendChild(card);
+  });
+  screen('worldsel');
+}
+
+function showPhases(){if(S.curWorld)renderPhases();screen('phases')}
+
+function renderPhases(){
+  const w=S.curWorld;
+  document.getElementById('ph-world-title').textContent=w.emoji+' '+w.name;
+  const tabs=document.getElementById('session-tabs');tabs.innerHTML='';
+  w.sessions.forEach(s=>{
+    const t=document.createElement('button');
+    t.className='stab'+(S.curSession&&S.curSession.id===s.id?' active':'');
+    t.innerHTML=s.label;
+    t.onclick=()=>{S.curSession=s;renderPhases()};
+    tabs.appendChild(t);
+  });
+  const list=document.getElementById('phase-list');list.innerHTML='';
+  const sess=S.curSession||w.sessions[0];
+  sess.phases.forEach((p,i)=>{
+    const done=!!S.done[p.id];
+    const prevOk=i===0||!!S.done[sess.phases[i-1].id];
+    const locked=!prevOk;
+    const item=document.createElement('div');
+    item.className='pitem'+(done?' done':'')+(locked?' locked':'');
+    const tag=p.isBoss?'<span class="tag-boss">BOSS</span>':i<2?'<span class="tag-easy">BÁSICO</span>':'<span class="tag-hard">AVANÇADO</span>';
+    item.innerHTML=`<div class="pnum">${String(i+1).padStart(2,'0')}</div><div class="pinfo">${tag}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div><div class="pxp">+${p.xp} XP</div></div><div class="pbadge">${done?'✅':locked?'🔒':p.emoji}</div>`;
+    if(!locked)item.onclick=()=>startPhase(p);
+    list.appendChild(item);
+  });
+}
+
+function startPhase(p){
+  S.curPhase=p;S.step=0;S.qOk=0;S.qTotal=0;
+  if(p.isBoss){startBoss(p);return}
+  if(p.prereq){
+    if(!S.done[p.prereq.id]){
+      document.getElementById('prereq-body').innerHTML='💡 <strong>'+p.prereq.msg+'</strong><br><br>Clique em "Quero Revisar" para estudar o pré-requisito primeiro.';
+      S.pre=p;document.getElementById('prereq-modal').classList.add('show');return;
+    }
+  }
+  loadStep();
+}
+
+function closePrereq(go){
+  document.getElementById('prereq-modal').classList.remove('show');
+  if(go){loadStep()}
+  else{const pid=S.pre.prereq.id;const sess=S.curSession||S.curWorld.sessions[0];const pr=sess.phases.find(ph=>ph.id===pid);if(pr)startPhase(pr)}
+}
+
+function loadStep(){
+  const steps=S.curPhase.steps;
+  if(!steps||S.step>=steps.length){finishPhase();return}
+  const step=steps[S.step];
+  const bar=document.getElementById('prog-bar');bar.innerHTML='';
+  const bb=document.createElement('button');bb.className='btn-back';bb.textContent='← FASES';bb.onclick=showPhases;bar.appendChild(bb);
+  steps.forEach((_,i)=>{const d=document.createElement('div');d.className='sdot'+(i<S.step?' done':i===S.step?' active':'');bar.appendChild(d)});
+  screen('lesson');
+  if(step.type==='quiz')renderQuiz(step);else renderLesson(step);
+}
+
+function renderLesson(step){
+  document.getElementById('lesson-content').innerHTML=`<div class="lcard"><div class="step-lbl">${step.label}</div><div class="step-ttl">${step.title}</div><div class="lbody">${step.body}</div><div class="lnav"><button class="btn-s" onclick="prevStep()">← ANTERIOR</button><button class="btn-p" onclick="nextStep()">CONTINUAR →</button></div></div>`;
+}
+function prevStep(){if(S.step>0){S.step--;loadStep()}else showPhases()}
+function nextStep(){S.step++;loadStep()}
+
+let curQs=[],curQ=0;
+function renderQuiz(step){curQs=step.questions;curQ=0;S.qOk=0;S.qTotal=step.questions.length;renderQ()}
+function renderQ(){
+  const q=curQs[curQ],L=['A','B','C','D','E'];
+  const qtitle=S.curPhase.steps.find(s=>s.type==='quiz')?S.curPhase.steps.find(s=>s.type==='quiz').title:'QUIZ';
+  document.getElementById('lesson-content').innerHTML=`<div class="ecard"><div class="step-lbl">❓ QUIZ ${curQ+1}/${curQs.length}</div><div class="step-ttl">${qtitle}</div><div class="eq"><strong>${q.q}</strong></div><div class="choices" id="ch-wrap"></div><div class="fb" id="fb"></div><div class="qnav" id="qnav"><button class="btn-p" id="qnext">PRÓXIMA →</button></div></div>`;
+  const w=document.getElementById('ch-wrap');
+  q.ch.forEach((c,i)=>{const b=document.createElement('button');b.className='cbtn';b.innerHTML=`<span class="cltr">${L[i]}</span><span>${c}</span>`;b.onclick=()=>pick(i,q.ok,q.why);w.appendChild(b)});
+}
+function pick(chosen,ok,why){
+  document.querySelectorAll('.cbtn').forEach((b,i)=>{b.disabled=true;if(i===ok)b.classList.add('correct');else if(i===chosen)b.classList.add('wrong')});
+  const isOk=chosen===ok;if(isOk)S.qOk++;
+  const fb=document.getElementById('fb');fb.className='fb show '+(isOk?'correct':'wrong');fb.innerHTML=(isOk?'✅ Correto! ':'❌ Errado! ')+`<div class="why">💡 ${why}</div>`;
+  const nav=document.getElementById('qnav');nav.classList.add('show');
+  const isLast=curQ>=curQs.length-1;
+  document.getElementById('qnext').textContent=isLast?'VER RESULTADO →':'PRÓXIMA →';
+  document.getElementById('qnext').onclick=()=>{if(isLast)nextStep();else{curQ++;renderQ()}};
+}
+
+let bossQs=[],bossIdx=0,bossOk=0;
+function startBoss(p){
+  bossQs=p.bossMode==='derivadas'?BOSS_DERIVADAS:BOSS_LOGICA;
+  bossIdx=0;bossOk=0;
+  document.getElementById('boss-pts').textContent='0';
+  document.getElementById('bhp-bar').style.width='100%';
+  document.getElementById('bhp-txt').textContent='100%';
+  screen('boss');renderBossQ();
+}
+function renderBossQ(){
+  const hp=Math.max(0,100-bossOk/bossQs.length*100);
+  document.getElementById('bhp-bar').style.width=hp+'%';
+  document.getElementById('bhp-txt').textContent=Math.round(hp)+'%';
+  if(bossIdx>=bossQs.length){endBoss();return}
+  const q=bossQs[bossIdx],L=['A','B','C','D','E'];
+  document.getElementById('boss-content').innerHTML=`<div class="ecard" style="border-color:var(--red)"><div class="step-lbl" style="color:var(--red)">QUESTÃO ${bossIdx+1}/${bossQs.length} — PROVA REAL UFPR</div><div class="eq"><strong>${q.q}</strong></div><div class="choices" id="bch"></div><div class="fb" id="bfb"></div><div class="qnav" id="bnav"><button class="btn-p danger" onclick="bossNext()">PRÓXIMA →</button></div></div>`;
+  const w=document.getElementById('bch');
+  q.ch.forEach((c,i)=>{
+    const b=document.createElement('button');b.className='cbtn';b.innerHTML=`<span class="cltr">${L[i]}</span><span>${c}</span>`;
+    b.onclick=()=>{
+      document.querySelectorAll('#bch .cbtn').forEach((x,j)=>{x.disabled=true;if(j===q.ok)x.classList.add('correct');else if(j===i)x.classList.add('wrong')});
+      if(i===q.ok)bossOk++;
+      document.getElementById('boss-pts').textContent=bossOk*60;
+      const bf=document.getElementById('bfb');bf.className='fb show '+(i===q.ok?'correct':'wrong');bf.innerHTML=(i===q.ok?'⚔️ ACERTO! +60 pts':'💀 ERROU!')+`<div class="why">💡 ${q.why}</div>`;
+      document.getElementById('bnav').classList.add('show');
+      const hp2=Math.max(0,100-bossOk/bossQs.length*100);
+      document.getElementById('bhp-bar').style.width=hp2+'%';
+      document.getElementById('bhp-txt').textContent=Math.round(hp2)+'%';
+    };
+    w.appendChild(b);
+  });
+}
+function bossNext(){bossIdx++;renderBossQ()}
+function endBoss(){
+  const pct=Math.round(bossOk/bossQs.length*100),xg=200+bossOk*30;
+  S.xp+=xg;S.done[S.curPhase.id]=true;checkAchs(S.curPhase.id,pct);save();
+  showResults({emoji:pct>=70?'🏆':pct>=50?'⭐':'💪',title:pct>=70?'BOSS DERROTADO!':'BOA LUTA!',sub:pct+'% — '+bossOk+'/'+bossQs.length+' acertos',ok:bossOk,err:bossQs.length-bossOk,xp:xg,pct:pct+'%',rev:pct<70?'📖 Revise os pontos que erraste!':'',final:true});
+}
+
+function finishPhase(){
+  const ok=S.qOk,tot=S.qTotal,pct=tot?Math.round(ok/tot*100):100;
+  const xg=Math.round(S.curPhase.xp*(0.5+pct/200));
+  S.xp+=xg;S.done[S.curPhase.id]=true;S.level=lvl();checkAchs(S.curPhase.id,pct);save();
+  showResults({emoji:pct>=80?'🏆':pct>=60?'⭐':'💪',title:'FASE CONCLUÍDA!',sub:S.curPhase.name+' — Parabéns!',ok,err:tot-ok,xp:xg,pct:(tot?pct+'%':'100%'),rev:pct<70?'📖 Recomendo rever a explicação antes de avançar!':'',final:false});
+}
+
+function showResults(d){
+  document.getElementById('r-emoji').textContent=d.emoji;
+  document.getElementById('r-title').textContent=d.title;
+  document.getElementById('r-sub').textContent=d.sub;
+  document.getElementById('r-ok').textContent=d.ok;
+  document.getElementById('r-err').textContent=d.err;
+  document.getElementById('r-xp').textContent='+'+d.xp;
+  document.getElementById('r-pct').textContent=d.pct;
+  document.getElementById('r-xpmsg').textContent='✨ +'+d.xp+' XP GANHOS!';
+  document.getElementById('r-rev').textContent=d.rev;
+  const ra=document.getElementById('r-ach');
+  if(S.achs.length){const l=S.achs[S.achs.length-1];ra.innerHTML=`<div class="ach-pop"><span class="ach-ico">🏅</span><div class="ach-txt">CONQUISTA!<br>${l}</div></div>`;ra.classList.remove('hidden')}
+  else ra.classList.add('hidden');
+  const nb=document.getElementById('r-next');
+  nb.textContent=d.final?'VER MUNDOS →':'PRÓXIMA FASE →';
+  if(d.final)nb.onclick=showWorldSel;else nb.onclick=nextAfterResult;
+  screen('results');notify('🎉 +'+d.xp+' XP!');
+}
+
+function nextAfterResult(){
+  const sess=S.curSession;if(!sess){showWorldSel();return}
+  const i=sess.phases.findIndex(p=>p.id===S.curPhase?.id);
+  if(i>=0&&i<sess.phases.length-1){S.curPhase=sess.phases[i+1];S.step=0;renderPhases();screen('phases')}
+  else showWorldSel();
+}
+
+function checkAchs(pid,pct){
+  const a=S.achs;
+  if(Object.keys(S.done).length===1&&!a.includes('🏅 Primeira Fase'))a.push('🏅 Primeira Fase Concluída!');
+  if(pct===100&&!a.includes('💯 Perfeito'))a.push('💯 Pontuação Perfeita!');
+  if(pid.includes('boss')&&!a.includes('⚔️ Boss'))a.push('⚔️ Boss Derrotado!');
+  if(Object.keys(S.done).length>=5&&!a.includes('🧠 Pensador'))a.push('🧠 Pensador Crítico!');
+  if(Object.keys(S.done).length>=8&&!a.includes('🎓 Mestre'))a.push('🎓 Mestre!');
+}
+
+function showAchievements(){alert('🏆 Conquistas:\n'+(S.achs.length?S.achs.join('\n'):'Nenhuma ainda! Complete fases para desbloquear.'))}
+function resetProgress(){if(confirm('Resetar TUDO?')){localStorage.removeItem('sc2');S={xp:0,level:1,done:{},achs:[],curWorld:null,curSession:null,curPhase:null,step:0,qOk:0,qTotal:0,pre:null};showTitle();notify('Resetado!','#f85149')}}
+function notify(msg,col){const n=document.createElement('div');n.className='notif';n.textContent=msg;if(col)n.style.borderColor=col;document.body.appendChild(n);setTimeout(()=>n.remove(),3100)}
+
+load();showTitle();
+</script>
+</body>
+</html>
